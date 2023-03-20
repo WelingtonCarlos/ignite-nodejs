@@ -1,41 +1,18 @@
 import http from "node:http";
-
-const users = [];
+import { json } from "./middlewares/json.js";
+import { routes } from "./routes.js";
 
 const server = http.createServer(async (request, response) => {
   const { method, url } = request;
 
-  const buffers = [];
+  await json(request, response);
 
-  for await (const chunk of request) {
-    buffers.push(chunk);
-  }
+  const route = routes.find((route) => {
+    return route.method === method && route.path === url;
+  });
 
-  try {
-    request.body = JSON.parse(Buffer.concat(buffers).toString("utf8"));
-  } catch {
-    request.body = {};
-  }
-
-  if (method === "GET" && url === "/users") {
-    return response
-      .setHeader("Content-type", "application/json")
-      .end(JSON.stringify(users));
-  }
-
-  if (method === "POST" && url === "/users") {
-    const { name, idade, data_de_nascimento, signo, email } = request.body;
-
-    users.push({
-      id: 1,
-      name,
-      idade,
-      data_de_nascimento,
-      signo,
-      email,
-    });
-
-    return response.writeHead(201).end();
+  if (route) {
+    return route.handler(request, response);
   }
 
   return response.writeHead(404).end();
