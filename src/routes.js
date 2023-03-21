@@ -9,7 +9,21 @@ export const routes = [
     method: "GET",
     path: buildRoutePath("/users"),
     handler: (request, response) => {
-      const users = database.select("users");
+      const { search } = request.query;
+
+      const users = database.select(
+        "users",
+        search
+          ? {
+              name: search,
+              idade: search,
+              data_de_nascimento: search,
+              signo: search,
+              email: search,
+            }
+          : null
+      );
+
       return response.end(JSON.stringify(users));
     },
   },
@@ -28,6 +42,24 @@ export const routes = [
       };
       database.insert("users", user);
       return response.writeHead(201).end();
+    },
+  },
+  {
+    method: "PUT",
+    path: buildRoutePath("/users/:id"),
+    handler: (request, response) => {
+      const { id } = request.params;
+      const { name, idade, data_de_nascimento, signo, email } = request.body;
+
+      database.update("users", id, {
+        name,
+        idade,
+        data_de_nascimento,
+        signo,
+        email,
+      });
+
+      return response.writeHead(204).end();
     },
   },
   {
